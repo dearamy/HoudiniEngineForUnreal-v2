@@ -44,7 +44,8 @@
 
 #include "Model.h"
 #include "Engine/Brush.h"
-
+//[AMY]
+// #include "Engine/DataTable.h"
 #include "HoudiniEngineRuntimeUtils.h"
 #include "Kismet/KismetSystemLibrary.h"
 
@@ -226,7 +227,7 @@ UHoudiniInputBrush::UHoudiniInputBrush()
 //-----------------------------------------------------------------------------------------------------------------------------
 
 UObject* 
-UHoudiniInputObject::GetObject()
+UHoudiniInputObject::GetObject() const
 {
 	return InputObject.LoadSynchronous();
 }
@@ -285,9 +286,11 @@ UHoudiniInputSplineComponent::GetSplineComponent()
 }
 
 UHoudiniSplineComponent*
-UHoudiniInputHoudiniSplineComponent::GetCurveComponent()
+UHoudiniInputHoudiniSplineComponent::GetCurveComponent() const
 {
-	return MyHoudiniSplineComponent;
+	// [AMY]
+	return  nullptr;
+	// return MyHoudiniSplineComponent;
 }
 
 UCameraComponent*
@@ -476,7 +479,8 @@ UHoudiniInputHoudiniSplineComponent::CopyStateFrom(UHoudiniInputObject* InInput,
 	Super::CopyStateFrom(InInput, bCopyAllProperties);
 	// Clear component references since we don't currently support duplicating input components.
 	InputObject.Reset();
-	MyHoudiniSplineComponent = nullptr;
+	// [AMY]
+	// MyHoudiniSplineComponent = nullptr;
 }
 
 UHoudiniInputObject *
@@ -1037,7 +1041,8 @@ UHoudiniInputHoudiniSplineComponent::Update(UObject * InObject)
 	Super::Update(InObject);
 
 	// We need a strong ref to the spline component to prevent it from being GCed
-	MyHoudiniSplineComponent = Cast<UHoudiniSplineComponent>(InObject);
+	// [AMY]
+	UHoudiniSplineComponent* MyHoudiniSplineComponent = Cast<UHoudiniSplineComponent>(InObject);
 
 	if (!MyHoudiniSplineComponent || MyHoudiniSplineComponent->IsPendingKill())
 	{
@@ -1053,6 +1058,32 @@ UHoudiniInputHoudiniSplineComponent::Update(UObject * InObject)
 		Reversed = false;//Spline->IsReversed();
 	}
 }
+
+//[AMY] Fix temp
+UObject* UHoudiniInputHoudiniSplineComponent::GetObject() const
+{
+	return InputObject.LoadSynchronous();
+}
+
+void UHoudiniInputHoudiniSplineComponent::MarkChanged(const bool& bInChanged)
+{
+}
+
+void UHoudiniInputHoudiniSplineComponent::SetNeedsToTriggerUpdate(const bool& bInTriggersUpdate)
+{
+}
+
+bool UHoudiniInputHoudiniSplineComponent::HasChanged() const
+{
+	return false;
+}
+
+bool UHoudiniInputHoudiniSplineComponent::NeedsToTriggerUpdate() const
+{
+	return false;
+}
+
+//[AMY] Fix temp end
 
 void
 UHoudiniInputHoudiniAsset::Update(UObject * InObject)
@@ -1510,6 +1541,21 @@ bool UHoudiniInputBrush::FindIntersectingSubtractiveBrushes(const UHoudiniInputB
 
 	return true;	
 }
+// [AMY] TEMP FIX
+
+UHoudiniInputDataTable::UHoudiniInputDataTable(const FObjectInitializer& ObjectInitializer)
+    : Super(ObjectInitializer){}
+
+UHoudiniInputObject* UHoudiniInputDataTable::Create(UObject* InObject, UObject* InOuter, const FString& InName)
+{
+	return nullptr;
+}
+
+UDataTable* UHoudiniInputDataTable::GetDataTable() const
+{
+	return nullptr;
+}
+// [AMY] TEMP FIX END
 
 #if WITH_EDITOR
 void 

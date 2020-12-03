@@ -481,7 +481,8 @@ public:
 
 	UPROPERTY()
 	bool Reversed = false;
-
+	// [AMY]
+	virtual void CopyStateFrom(UHoudiniInputObject* InInput, bool bCopyAllProperties) override;
 
 protected:
 	
@@ -796,7 +797,7 @@ class HOUDINIENGINERUNTIME_API UHoudiniInputDataTable : public UHoudiniInputObje
 	GENERATED_UCLASS_BODY()
 
 public:
-
+	
 	//
 	static UHoudiniInputObject* Create(UObject * InObject, UObject* InOuter, const FString& InName);
 
