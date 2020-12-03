@@ -319,7 +319,8 @@ UHoudiniGeoImporter::CreateCurves(TArray<UHoudiniOutput*>& InOutputs, UObject* I
 		// Transfer all the instancer components to the BP
 		if (OutputComp.Num() > 0)
 		{
-			FKismetEditorUtilities::AddComponentsToBlueprint(Blueprint, OutputComp, FKismetEditorUtilities::EAddComponentToBPHarvestMode::None, nullptr, false);
+			// [AMY]
+			FKismetEditorUtilities::AddComponentsToBlueprint(Blueprint, OutputComp);
 		}
 	}
 
@@ -503,7 +504,8 @@ UHoudiniGeoImporter::CreateInstancers(TArray<UHoudiniOutput*>& InOutputs, UObjec
 		// Transfer all the instancer components to the BP
 		if (OutputComp.Num() > 0)
 		{
-			FKismetEditorUtilities::AddComponentsToBlueprint(Blueprint, OutputComp, FKismetEditorUtilities::EAddComponentToBPHarvestMode::None, nullptr, false);
+			//[AMY]
+			FKismetEditorUtilities::AddComponentsToBlueprint(Blueprint, OutputComp);
 		}
 	}
 
