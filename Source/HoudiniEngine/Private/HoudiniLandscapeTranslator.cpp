@@ -2254,8 +2254,7 @@ FHoudiniLandscapeTranslator::CreateOrUpdateLandscapeLayers(
 		if (NonWeightBlendedLayerNames.Contains(LayerName) || LayerName.Equals(TEXT("visibility"), ESearchCase::IgnoreCase))
 			LayerInfo->bNoWeightBlend = true;
 		else
-			// [AMY]
-			LayerInfo->bNoWeightBlend = true;
+			LayerInfo->bNoWeightBlend = false;
 
 		if (!bIsUpdate && Package && !Package->IsPendingKill())
 		{
@@ -3030,7 +3029,6 @@ FHoudiniLandscapeTranslator::FindOrCreateLandscapeLayerInfoObject(const FString&
 	if (!OutPackage || OutPackage->IsPendingKill())
 	{
 		// We need to create a new package
-		//[AMY]
 		OutPackage = CreatePackage(*PackageFullName);
 		bCreatedPackage = true;
 	}
