@@ -608,7 +608,9 @@ FHoudiniInputTranslator::UploadChangedInputs(UHoudiniAssetComponent * HAC)
 {
 	if (!HAC || HAC->IsPendingKill())
 		return false;
-
+	
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY]ManagerPreCook: FHoudiniInputTranslator::UploadChangedInputs| %s"),
+        *HAC->GetOwner()->GetName());
 	//for (auto CurrentInput : HAC->Inputs)
 	for(int32 InputIdx = 0; InputIdx < HAC->GetNumInputs(); InputIdx++)
 	{
@@ -1034,7 +1036,8 @@ FHoudiniInputTranslator::UploadInputData(UHoudiniInput* InInput)
 
 	// Finally, connect our main input node to the asset
 	bSuccess = ConnectInputNode(InInput);
-
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY]FHoudiniInputTranslator::UploadInputData| %s(%i)"),
+        *InInput->GetName(), bSuccess);
 	return bSuccess;
 }
 
@@ -2283,6 +2286,8 @@ FHoudiniInputTranslator::HapiCreateInputNodeForLandscape(
 			bExportAsMesh, bExportTileUVs, bExportNormalizedUVs, bExportLighting, bExportMaterials);
 	}
 
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY]FHoudiniInputTranslator::HapiCreateInputNodeForLandscape|InObj: %s|ExportType: %i|bSuccess:%i"),
+		*InObject->GetName(), ExportType, bSucess);
 	// Update this input object's OBJ NodeId
 	InObject->InputObjectNodeId = FHoudiniEngineUtils::HapiGetParentNodeId(InObject->InputNodeId);
 	InObject->Update(Landscape);
@@ -2388,6 +2393,7 @@ FHoudiniInputTranslator::UpdateLoadedInputs(UHoudiniAssetComponent* HAC)
 {
 	if (!HAC || HAC->IsPendingKill())
 		return false;
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY]ManagerPreCook:FHoudiniInputTranslator::UpdateLoadedInputs|HAC: %s"),*HAC->GetOwner()->GetName());
 
 	// We need to call BuildAllInputs here to update all the inputs,
 	// and make sure that the object path parameter inputs' parameter ids are up to date

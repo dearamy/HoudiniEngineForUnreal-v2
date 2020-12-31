@@ -1258,6 +1258,7 @@ FHoudiniSplineTranslator::CreateOutputSplinesFromHoudiniGeoPartObject(
 	const bool& bIsLinear,
 	const bool& bIsClosed) 
 {
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY]FHoudiniSplineTranslator::CreateOutputSplinesFromHoudiniGeoPartObject"));
 	// If we're not forcing the rebuild
 	// No need to recreate something that hasn't changed
 	if (!InForceRebuild && (!InHGPO.bHasGeoChanged || !InHGPO.bHasPartChanged))
@@ -1503,6 +1504,8 @@ FHoudiniSplineTranslator::CreateAllSplinesFromHoudiniOutput(UHoudiniOutput* InOu
 	if (InOutput->GetType() != EHoudiniOutputType::Curve)
 		return false;
 
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY]FHoudiniSplineTranslator::CreateAllSplinesFromHoudiniOutput|HouOutput: %s|InOuterComp Valid: %i")
+		,*InOutput->GetName(), *InOuterComponent->GetName());
 	// UHoudiniAssetComponent* OuterHAC = Cast<UHoudiniAssetComponent>(InOuterComponent);
 	//
 	// if (!OuterHAC || OuterHAC->IsPendingKill())
@@ -1514,6 +1517,8 @@ FHoudiniSplineTranslator::CreateAllSplinesFromHoudiniOutput(UHoudiniOutput* InOu
 	// Iterate on all the output's HGPO
 	for (const FHoudiniGeoPartObject & CurHGPO : InOutput->GetHoudiniGeoPartObjects())
 	{
+		HOUDINI_LOG_MESSAGE(TEXT("[AMY]FHoudiniSplineTranslator::CreateAllSplinesFromHoudiniOutput|CurHGPO.Type: %i"),
+			CurHGPO.Type);
 		// not a curve, skip
 		if (CurHGPO.Type != EHoudiniPartType::Curve)
 			continue;

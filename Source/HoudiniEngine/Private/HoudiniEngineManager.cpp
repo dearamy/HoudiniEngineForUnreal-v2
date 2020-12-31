@@ -320,7 +320,7 @@ FHoudiniEngineManager::ProcessComponent(UHoudiniAssetComponent* HAC)
 	// No need to process component not tied to an asset
 	if (!HAC->GetHoudiniAsset())
 		return;
-
+	
 	// If cooking is paused, stay in the current state until cooking's resumed
 	if (!FHoudiniEngine::Get().IsCookingEnabled())
 	{
@@ -397,7 +397,7 @@ FHoudiniEngineManager::ProcessComponent(UHoudiniAssetComponent* HAC)
 		}
 
 		case EHoudiniAssetState::Instantiating:
-		{			
+		{
 			EHoudiniAssetState NewState = EHoudiniAssetState::Instantiating;
 			if (UpdateInstantiating(HAC, NewState))
 			{
@@ -414,6 +414,7 @@ FHoudiniEngineManager::ProcessComponent(UHoudiniAssetComponent* HAC)
 
 		case EHoudiniAssetState::PreCook:
 		{
+			HOUDINI_LOG_MESSAGE(TEXT("[AMY]ProcessComponent:EHoudiniAssetState::PreCook"));
 			// Only proceed forward if we don't need to wait for our input
 			// HoudiniAssets to finish cooking/instantiating
 			if (HAC->NeedsToWaitForInputHoudiniAssets())
@@ -451,6 +452,7 @@ FHoudiniEngineManager::ProcessComponent(UHoudiniAssetComponent* HAC)
 
 		case EHoudiniAssetState::Cooking:
 		{
+			// HOUDINI_LOG_MESSAGE(TEXT("[AMY]ProcessComponent:EHoudiniAssetState::Cooking"));
 			EHoudiniAssetState NewState = EHoudiniAssetState::Cooking;
 			bool state = UpdateCooking(HAC, NewState);
 			if (state)
@@ -468,6 +470,7 @@ FHoudiniEngineManager::ProcessComponent(UHoudiniAssetComponent* HAC)
 
 		case EHoudiniAssetState::PostCook:
 		{
+			HOUDINI_LOG_MESSAGE(TEXT("[AMY]ProcessComponent:EHoudiniAssetState::PostCook"));
 			// Handle PostCook
 			EHoudiniAssetState NewState = EHoudiniAssetState::None;
 			bool bSuccess = HAC->bLastCookSuccess;
@@ -488,12 +491,14 @@ FHoudiniEngineManager::ProcessComponent(UHoudiniAssetComponent* HAC)
 
 		case EHoudiniAssetState::PreProcess:
 		{
+			HOUDINI_LOG_MESSAGE(TEXT("[AMY]ProcessComponent:EHoudiniAssetState::PreProcess"));
 			StartTaskAssetProcess(HAC);
 			break;
 		}
 
 		case EHoudiniAssetState::Processing:
 		{
+			HOUDINI_LOG_MESSAGE(TEXT("[AMY]ProcessComponent:EHoudiniAssetState::Processing"));
 			UpdateProcess(HAC);
 
 			int32 CookCount = FHoudiniEngineUtils::HapiGetCookCount(HAC->GetAssetId());
@@ -542,6 +547,7 @@ FHoudiniEngineManager::ProcessComponent(UHoudiniAssetComponent* HAC)
 
 		case EHoudiniAssetState::NeedRebuild:
 		{
+			HOUDINI_LOG_MESSAGE(TEXT("[AMY]ProcessComponent:EHoudiniAssetState::NeedRebuild"));
 			StartTaskAssetRebuild(HAC->AssetId, HAC->HapiGUID);
 
 			HAC->MarkAsNeedCook();
@@ -551,6 +557,7 @@ FHoudiniEngineManager::ProcessComponent(UHoudiniAssetComponent* HAC)
 
 		case EHoudiniAssetState::NeedDelete:
 		{
+			HOUDINI_LOG_MESSAGE(TEXT("[AMY]ProcessComponent:EHoudiniAssetState::NeedDelete"));
 			FGuid HapiDeletionGUID;
 			StartTaskAssetDelete(HAC->GetAssetId(), HapiDeletionGUID, true);
 				//HAC->AssetId = -1;
@@ -859,7 +866,8 @@ FHoudiniEngineManager::UpdateCooking(UHoudiniAssetComponent* HAC, EHoudiniAssetS
 		case EHoudiniEngineTaskState::FinishedWithError:
 		{
 			// We finished with cook error, will still try to process the results
-			HOUDINI_LOG_MESSAGE(TEXT("   %s FinishedCooking with errors - will try to process the available results."), *DisplayName);
+			HOUDINI_LOG_MESSAGE(TEXT("   [%s](%i) FinishedCooking with errors - will try to process the available results. - %s"),
+				*DisplayName, TaskInfo.TaskType, *TaskInfo.StatusText.ToString());
 			bSuccess = true;
 			bUpdateState = true;
 		}

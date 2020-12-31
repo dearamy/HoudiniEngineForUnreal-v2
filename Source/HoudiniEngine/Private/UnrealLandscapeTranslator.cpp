@@ -53,6 +53,9 @@ FUnrealLandscapeTranslator::CreateMeshOrPointsFromLandscape(
 	const bool bExportLighting,
 	const bool bExportMaterials	)
 {
+	
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY]FUnrealLandscapeTranslator::CreateMeshOrPointsFromLandscape| %s"),
+        *LandscapeProxy->GetName());
 	//--------------------------------------------------------------------------------------------------
 	// 1. Create an input node
     //--------------------------------------------------------------------------------------------------
@@ -278,6 +281,8 @@ FUnrealLandscapeTranslator::CreateHeightfieldFromLandscape(
 	if (!LandscapeProxy)
 		return false;
 
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY]FUnrealLandscapeTranslator::CreateHeightfieldFromLandscape| %s"),
+		*LandscapeProxy->GetName());
 	// Export the whole landscape and its layer as a single heightfield.
 
 	//--------------------------------------------------------------------------------------------------

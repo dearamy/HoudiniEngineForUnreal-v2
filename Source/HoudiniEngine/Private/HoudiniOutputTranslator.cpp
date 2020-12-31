@@ -65,6 +65,8 @@
 bool
 FHoudiniOutputTranslator::UpdateOutputs(UHoudiniAssetComponent* HAC, const bool& bInForceUpdate, bool& bOutHasHoudiniStaticMeshOutput)
 {
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY] FHoudiniOutputTranslator::UpdateOutputs|%s|bOutHasHoudiniStaticMeshOutput:%i|NumOutputs:%i"),
+		*HAC->GetDisplayName(),bOutHasHoudiniStaticMeshOutput, HAC->Outputs.Num());
 	if (!HAC || HAC->IsPendingKill())
 		return false;
 
@@ -213,7 +215,6 @@ FHoudiniOutputTranslator::UpdateOutputs(UHoudiniAssetComponent* HAC, const bool&
 		if (CurrentInput->GetUpdateInputLandscape())
 			InputLandscapesToUpdate.Add(InputLandscape);
 	}
-
 	// ----------------------------------------------------
 	// Process outputs
 	// ----------------------------------------------------
@@ -229,6 +230,7 @@ FHoudiniOutputTranslator::UpdateOutputs(UHoudiniAssetComponent* HAC, const bool&
 
 		if (!HAC->IsOutputTypeSupported(CurOutput->GetType()))
 			continue;
+		HOUDINI_LOG_MESSAGE(TEXT("[AMY] FHoudiniOutputTranslator::UpdateOutputs|CurOutput: %s(%i)|Type: %i"), *CurOutput->GetName(), OutputIdx, CurOutput->GetType());
 
 		switch (CurOutput->GetType())
 		{
@@ -360,7 +362,8 @@ FHoudiniOutputTranslator::UpdateOutputs(UHoudiniAssetComponent* HAC, const bool&
 				OutputLandscape = LandscapePtr->GetRawPtr();
 				break;
 			}
-
+			HOUDINI_LOG_MESSAGE(TEXT("[AMY]FHoudiniOutputTranslator::UpdateOutputs: Case:Landscape: %s(IsValid: %i)|OutputObjects: %i"),
+				*CurOutput->GetName(), IsValid(OutputLandscape), CurOutput->GetOutputObjects().Num());
 			if (OutputLandscape) 
 			{
 				// Attach the created landscapes to HAC
@@ -512,7 +515,7 @@ FHoudiniOutputTranslator::BuildStaticMeshesOnHoudiniProxyMeshOutputs(UHoudiniAss
 		return false;
 
 	UObject* OuterComponent = HAC;
-
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY] 0 BuildStaticMeshesOnHoudiniProxyMeshOutputs: %s"), *HAC->GetDisplayName());
 	FHoudiniPackageParams PackageParams;
 	PackageParams.PackageMode = FHoudiniPackageParams::GetDefaultStaticMeshesCookMode();
 	PackageParams.ReplaceMode = FHoudiniPackageParams::GetDefaultReplaceMode();
@@ -568,6 +571,8 @@ FHoudiniOutputTranslator::BuildStaticMeshesOnHoudiniProxyMeshOutputs(UHoudiniAss
 bool
 FHoudiniOutputTranslator::UpdateLoadedOutputs(UHoudiniAssetComponent* HAC)
 {
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY]ManagerPreCook:FHoudiniOutputTranslator::UpdateLoadedOutputs|HAC: %s"),*HAC->GetOwner()->GetName());
+
 	HAPI_NodeId & AssetId = HAC->AssetId;
 	// Get the AssetInfo
 	HAPI_AssetInfo AssetInfo;
@@ -769,6 +774,7 @@ FHoudiniOutputTranslator::UploadChangedEditableOutput(
 {
 	if (!HAC || HAC->IsPendingKill())
 		return false;
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY]ManagerPreCook: FHoudiniInputTranslator::UploadChangedEditableOutput| %s"), *HAC->GetName());
 
 	TArray<UHoudiniOutput*> &Outputs = HAC->Outputs;
 

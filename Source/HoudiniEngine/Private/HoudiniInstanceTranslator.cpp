@@ -67,6 +67,8 @@ FHoudiniInstanceTranslator::PopulateInstancedOutputPartData(
 	const TArray<UHoudiniOutput*>& InAllOutputs,
 	FHoudiniInstancedOutputPartData& OutInstancedOutputPartData)
 {
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY]FHoudiniInstanceTranslator::PopulateInstancedOutputPartData: %s(%i)"), *InHGPO.AssetName, InAllOutputs.Num());
+
 	// Get if force to use HISM from attribute
 	OutInstancedOutputPartData.bForceHISM = HasHISMAttribute(InHGPO.GeoId, InHGPO.PartId);
 
@@ -85,6 +87,8 @@ FHoudiniInstanceTranslator::PopulateInstancedOutputPartData(
 	OutInstancedOutputPartData.bSplitMeshInstancer = IsSplitInstancer(InHGPO.GeoId, InHGPO.PartId);
 
 	OutInstancedOutputPartData.bIsFoliageInstancer = IsFoliageInstancer(InHGPO.GeoId, InHGPO.PartId);
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY]FHoudiniInstanceTranslator::PopulateInstancedOutputPartData|bIsFoliageInstancer: %i, OriginalInstancedObjects: %i"),
+		OutInstancedOutputPartData.bIsFoliageInstancer, OutInstancedOutputPartData.OriginalInstancedObjects.Num());
 
 	// Extract the generic attributes
 	GetGenericPropertiesAttributes(InHGPO.GeoId, InHGPO.PartId, OutInstancedOutputPartData.AllPropertyAttributes);
@@ -138,6 +142,7 @@ FHoudiniInstanceTranslator::CreateAllInstancersFromHoudiniOutput(
 	UObject* InOuterComponent,
 	const TMap<FHoudiniOutputObjectIdentifier, FHoudiniInstancedOutputPartData>* InPreBuiltInstancedOutputPartData)
 {
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY]FHoudiniInstanceTranslator::CreateAllInstancersFromHoudiniOutput - %s"), *InOutput->GetName());
 	if (!InOutput || InOutput->IsPendingKill())
 		return false;
 
@@ -530,7 +535,7 @@ FHoudiniInstanceTranslator::UpdateChangedInstancedOutput(
 	bool bSplitMeshInstancer = IsSplitInstancer(OutputIdentifier.GeoId, OutputIdentifier.PartId);
 
 	bool bIsFoliageInstancer = IsFoliageInstancer(OutputIdentifier.GeoId, OutputIdentifier.PartId);
-
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY]UpdateChangedInstancedOutput - bIsFoliageInstancer: %i"), bIsFoliageInstancer);
 	// See if we have instancer material overrides
 	TArray<UMaterialInterface*> InstancerMaterials;
 	if (!GetInstancerMaterials(OutputIdentifier.GeoId, OutputIdentifier.PartId, InstancerMaterials))
@@ -700,9 +705,11 @@ FHoudiniInstanceTranslator::GetInstancerObjectsAndTransforms(
 		break;
 	}
 
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY]FHoudiniInstanceTranslator::GetInstancerObjectsAndTransforms|InHGPO %s-%s|InstancerType: %i |bSuccess: %i"),
+		*InHGPO.AssetName, *InHGPO.NodePath, InHGPO.InstancerType, bSuccess);
+
 	if (!bSuccess)
 		return false;
-
 	// Fetch the UOBject that correspond to the instanced parts
 	// Attribute instancers don't need to do this since they refer UObjects directly
 	if (InstancedHGPOs.Num() > 0)
@@ -777,6 +784,7 @@ FHoudiniInstanceTranslator::UpdateInstanceVariationObjects(
 	TArray<int32>& OutVariationOriginalObjectIdx,
 	TArray<int32>& OutVariationIndices)
 {
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY]FHoudiniInstanceTranslator::UpdateInstanceVariationObjects|InOriginalTransforms:%i"), InOriginalTransforms.Num());
 	FHoudiniOutputObjectIdentifier Identifier = InOutputIdentifier;
 	for (int32 InstObjIdx = 0; InstObjIdx < InOriginalObjects.Num(); InstObjIdx++)
 	{
@@ -1275,7 +1283,7 @@ FHoudiniInstanceTranslator::GetAttributeInstancerObjectsAndTransforms(
 
 		if (!AttributeObject && bDefaultObjectEnabled)
 		{
-			HOUDINI_LOG_WARNING(TEXT("Failed to load instanced object '%s', using default instance mesh (hidden in game)."), *(AssetName));
+			HOUDINI_LOG_WARNING(TEXT("[AMY]GetAttributeInstancerObjectsAndTransforms: Failed to load instanced object '%s', using default instance mesh (hidden in game)."), *(AssetName));
 
 			// Couldn't load the referenced object, use the default reference mesh
 			UStaticMesh * DefaultReferenceSM = FHoudiniEngine::Get().GetHoudiniDefaultReferenceMesh().Get();
@@ -1357,7 +1365,7 @@ FHoudiniInstanceTranslator::GetAttributeInstancerObjectsAndTransforms(
 			if (!AttributeObject && bDefaultObjectEnabled) 
 			{
 				HOUDINI_LOG_WARNING(
-					TEXT("Failed to load instanced object '%s', use default mesh (hidden in game)."), *(Iter.Key));
+					TEXT("[AMY]FHoudiniInstanceTranslator::GetAttributeInstancerObjectsAndTransforms: Failed to load instanced object key:'%s', use default mesh (hidden in game)."), *(Iter.Key));
 
 				// If failed to load this object, add default reference mesh
 				UStaticMesh * DefaultReferenceSM = FHoudiniEngine::Get().GetHoudiniDefaultReferenceMesh().Get();
@@ -1416,6 +1424,8 @@ FHoudiniInstanceTranslator::GetAttributeInstancerObjectsAndTransforms(
 			}
 		}
 
+		HOUDINI_LOG_WARNING(TEXT("[AMY]FHoudiniInstanceTranslator::GetAttributeInstancerObjectsAndTransforms|InHGPO: %s|PointInstanceValues Length: %i|Success: %i"),
+		*InHGPO.PartName, PointInstanceValues.Num(), Success);
 		if (!Success) 
 			return false;
 	}
@@ -1781,6 +1791,8 @@ FHoudiniInstanceTranslator::CreateOrUpdateInstanceComponent(
 		}
 	}
 
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY]FHoudiniInstanceTranslator::CreateOrUpdateInstanceComponent|Type:%i|NewComponentValid:%i"),
+		NewType, IsValid(NewComponent));
 	if (!NewComponent)
 		return false;
 
@@ -1992,7 +2004,8 @@ FHoudiniInstanceTranslator::CreateOrUpdateMeshSplitInstancerComponent(
 
 	if (!ParentComponent || ParentComponent->IsPendingKill())
 		return false;
-
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY]FHoudiniInstanceTranslator::CreateOrUpdateMeshSplitInstancerComponent|InstancedStaticMesh: %s|ParentComponent: %s"),
+	*InstancedStaticMesh->GetName(), *ParentComponent->GetName());
 	UObject* ComponentOuter = ParentComponent;
 	if (ParentComponent->GetOwner() && !ParentComponent->GetOwner()->IsPendingKill())
 		ComponentOuter = ParentComponent->GetOwner();
@@ -2322,6 +2335,8 @@ FHoudiniInstanceTranslator::CreateOrUpdateFoliageInstances(
 	if (!ParentComponent || ParentComponent->IsPendingKill())
 		return false;
 
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY]FHoudiniInstanceTranslator::CreateOrUpdateFoliageInstances|InstancedStaticMesh: %s"), *InstancedStaticMesh->GetName());
+	// HOUDINI_LOG_MESSAGE(TEXT("[AMY] CreateOrUpdateFoliageInstances: %s"), *InFoliageType->GetName());
 	UObject* ComponentOuter = ParentComponent;
 	if (ParentComponent->GetOwner() && !ParentComponent->GetOwner()->IsPendingKill())
 		ComponentOuter = ParentComponent->GetOwner();
@@ -2744,7 +2759,6 @@ FHoudiniInstanceTranslator::IsFoliageInstancer(const int32& InGeoId, const int32
 	HAPI_AttributeOwner Owner = HAPI_ATTROWNER_DETAIL;
 	bIsFoliageInstancer = FHoudiniEngineUtils::HapiCheckAttributeExists(
 		InGeoId, InPartId, HAPI_UNREAL_ATTRIB_FOLIAGE_INSTANCER, Owner);
-
 	if (!bIsFoliageInstancer)
 	{
 		// Try on primitive
@@ -2761,6 +2775,7 @@ FHoudiniInstanceTranslator::IsFoliageInstancer(const int32& InGeoId, const int32
 			InGeoId, InPartId, HAPI_UNREAL_ATTRIB_FOLIAGE_INSTANCER, Owner);
 	}
 
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY]FHoudiniInstanceTranslator::IsFoliageInstancer|GeoId:%i |IsFoliageInstancer: %i"), InGeoId, bIsFoliageInstancer);
 	if (!bIsFoliageInstancer)
 		return false;
 
@@ -2773,7 +2788,7 @@ FHoudiniInstanceTranslator::IsFoliageInstancer(const int32& InGeoId, const int32
 
 	if (!AttributeInfo.exists || AttributeInfo.count <= 0)
 		return false;
-
+	
 	// We only support int/float attributes
 	if (AttributeInfo.storage == HAPI_STORAGETYPE_INT)
 	{

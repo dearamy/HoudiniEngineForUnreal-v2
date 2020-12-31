@@ -105,6 +105,8 @@ FHoudiniLandscapeTranslator::CreateLandscape(
 	TArray<UPackage*>& OutCreatedPackages
 )
 {
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY]|FHoudiniLandscapeTranslator::CreateLandscape| DefaultLandscapeActorPrefix:%s"),
+		*DefaultLandscapeActorPrefix);
 	check(LayerMinimums.Contains(TEXT("height")));
 	check(LayerMaximums.Contains(TEXT("height")));
 
@@ -416,6 +418,7 @@ FHoudiniLandscapeTranslator::CreateLandscape(
 	ALandscape* SharedLandscapeActor = nullptr;
 	bool bCreatedSharedLandscape = false;
 	
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY]CreateLandscape: bCreatedSharedLandscape: %i, LayerInfosCount: %i"),bCreatedSharedLandscape, LayerInfos.Num());
 	if (bRequiresSharedLandscape)
 	{
 		// Streaming proxy tiles always require a "shared landscape" that contains the
@@ -1371,6 +1374,7 @@ FHoudiniLandscapeTranslator::ConvertHeightfieldDataToLandscapeData(
 	int32 SizeInPoints = HoudiniXSize * HoudiniYSize;
 	if ((HoudiniXSize < 2) || (HoudiniYSize < 2))
 		return false;
+	HOUDINI_LOG_WARNING(TEXT("[AMY]HoudiniXSize:%f, HoudiniYSize:%f, ZLength: %f"), HoudiniXSize, HoudiniYSize, HeightfieldVolumeInfo.ZLength);
 
 	// Test for potential special cases...
 	// Just print a warning for now
@@ -1385,6 +1389,8 @@ FHoudiniLandscapeTranslator::ConvertHeightfieldDataToLandscapeData(
 	//--------------------------------------------------------------------------------------------------
 
 	FTransform CurrentVolumeTransform = HeightfieldVolumeInfo.Transform;
+	HOUDINI_LOG_WARNING(TEXT("[AMY]ConvertHeightfieldDataToLandscapeData: HeightfieldVolumeInfo(%f, %f, %f)"), HeightfieldVolumeInfo.XLength, HeightfieldVolumeInfo.YLength, HeightfieldVolumeInfo.ZLength);
+	HOUDINI_LOG_WARNING(TEXT("[AMY]ConvertHeightfieldDataToLandscapeData: CurrentVolumeTransform(%f, %f, %f)"), CurrentVolumeTransform.GetScale3D().X, CurrentVolumeTransform.GetScale3D().Y, CurrentVolumeTransform.GetScale3D().Z);
 
 	// The ZRange in Houdini (in m)
 	double MeterZRange = (double)(FloatMax - FloatMin);
@@ -1426,8 +1432,9 @@ FHoudiniLandscapeTranslator::ConvertHeightfieldDataToLandscapeData(
 
 		// Default unreal landscape scaling is -256m:256m at Scale = 100
 		// We need to apply the scale back to
-		FloatMin = -256.0f * CurrentVolumeTransform.GetScale3D().Z * 2.0f;
-		FloatMax = 256.0f * CurrentVolumeTransform.GetScale3D().Z * 2.0f;
+		// [AMYTEMP]
+		FloatMin = -256.0f * CurrentVolumeTransform.GetScale3D().Y * 2.0f;
+		FloatMax = 256.0f * CurrentVolumeTransform.GetScale3D().Y * 2.0f;
 		MeterZRange = (double)(FloatMax - FloatMin);
 
 		ZSpacing = ((double)DigitZRange) / MeterZRange;
@@ -1482,13 +1489,15 @@ FHoudiniLandscapeTranslator::ConvertHeightfieldDataToLandscapeData(
 
 	// Unreal has a X/Y resolution of 1m per point while Houdini is dependant on the heighfield's grid spacing
 	LandscapeScale.X = CurrentVolumeTransform.GetScale3D().X * 2.0f;
-	LandscapeScale.Y = CurrentVolumeTransform.GetScale3D().Y * 2.0f;
+	// [AMYTEMP]
+	LandscapeScale.Y = CurrentVolumeTransform.GetScale3D().Z * 2.0f;
 
 	// Calculating the Z Scale so that the Z values in Unreal are the same as in Houdini
 	// Unreal has a default Z range is 512m for a scale of a 100%
 	LandscapeScale.Z = (float)((double)(dUINT16_MAX / DigitZRange) * MeterZRange / 512.0);
+	// [AMYTEMP]
 	if (bUseDefaultUE4Scaling)
-		LandscapeScale.Z = CurrentVolumeTransform.GetScale3D().Z * 2.0f;
+		LandscapeScale.Z = CurrentVolumeTransform.GetScale3D().Y * 2.0f;
 	LandscapeScale *= 100.f;
 
 	// If the data was resized and not expanded, we need to modify the landscape's scale
@@ -1556,7 +1565,8 @@ FHoudiniLandscapeTranslator::ConvertHeightfieldDataToLandscapeData(
 	// We can now set the Landscape position
 	LandscapeTransform.SetLocation(LandscapePosition);
 	LandscapeTransform.SetScale3D(LandscapeScale);
-
+	HOUDINI_LOG_WARNING(TEXT("[AMY]ConvertHeightfieldDataToLandscapeData:LandscapeTransform: %f, %f, %f (%f,%f,%f)"), LandscapeScale.X, LandscapeScale.Y, LandscapeScale.Z,
+		LandscapeResizeFactor.X, LandscapeResizeFactor.Y, LandscapeResizeFactor.Z);
 	// Rotate the vector using the H rotation	
 	FRotator Rotator = CurrentVolumeTransform.GetRotation().Rotator();
 	// We need to compensate for the "default" HF Transform
@@ -1749,6 +1759,8 @@ FHoudiniLandscapeTranslator::CalcLandscapeSizeFromHeightfieldSize(
 	int32& UnrealSizeX, int32& UnrealSizeY, 
 	int32& NumSectionsPerComponent, int32& NumQuadsPerSection)
 {
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY]FHoudiniLandscapeTranslator::CalcLandscapeSizeFromHeightfieldSize| HoudiniSizeX: %i| HoudiniSizeY: %i"),
+    HoudiniSizeX, HoudiniSizeY);
 	if ((HoudiniSizeX < 2) || (HoudiniSizeY < 2))
 		return false;
 
@@ -1889,10 +1901,10 @@ FHoudiniLandscapeTranslator::GetHoudiniHeightFieldFromOutput(UHoudiniOutput* InO
 			return nullptr;
 		}	
 
-		// Terrains always have a ZSize of 1.
+		//[AMY] Terrains always have a ZSize of 1.
 		if (CurVolumeInfo.ZLength != 1)
 		{
-			HOUDINI_LOG_ERROR(TEXT("Failed to create landscape output: the height volume's z length is not 1!"));
+			HOUDINI_LOG_ERROR(TEXT("Failed to create landscape output: the height volume's z length is not 1! (%f, %f, %f)"), CurVolumeInfo.XLength, CurVolumeInfo.YLength, CurVolumeInfo.ZLength);
 			return nullptr;
 		}
 
@@ -1912,6 +1924,8 @@ FHoudiniLandscapeTranslator::GetHoudiniHeightFieldFromOutput(UHoudiniOutput* InO
 void 
 FHoudiniLandscapeTranslator::GetHeightfieldsLayersFromOutput(const UHoudiniOutput* InOutput, const FHoudiniGeoPartObject& Heightfield, TArray< const FHoudiniGeoPartObject* >& FoundLayers) 
 {
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY]FHoudiniLandscapeTranslator::GetHeightfieldsLayersFromOutput| UHoudiniOutput: %s| Heightfield: %i"),
+    *InOutput->GetName(), *Heightfield.AssetName);
 	FoundLayers.Empty();
 
 	// Get node id
@@ -2009,6 +2023,8 @@ FHoudiniLandscapeTranslator::GetHoudiniHeightfieldFloatData(const FHoudiniGeoPar
 	HAPI_VolumeInfo VolumeInfo;
 	FHoudiniApi::VolumeInfo_Init(&VolumeInfo);
 
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY]FHoudiniLandscapeTranslator::GetHoudiniHeightfieldFloatData|HGPO: %s|Type: %i|tupleSize: %i|zLength: %i|xLength: %i|yLength: %i"),
+		*HGPO->ObjectName, HGPO->Type, VolumeInfo.tupleSize, VolumeInfo.zLength,VolumeInfo.xLength,VolumeInfo.yLength);
 	HAPI_Result Result = FHoudiniApi::GetVolumeInfo(
 		FHoudiniEngine::Get().GetSession(),
 		HGPO->GeoId, HGPO->PartId, &VolumeInfo);
@@ -2050,6 +2066,7 @@ FHoudiniLandscapeTranslator::GetHoudiniHeightfieldFloatData(const FHoudiniGeoPar
 			OutFloatMin = NextFloatVal;
 	}
 
+	HOUDINI_LOG_WARNING(TEXT("[AMY]GetHoudiniHeightfieldFloatData: Layer %s (%f, %f)"), *HGPO->VolumeName, OutFloatMin, OutFloatMax);
 	return true;
 }
 
@@ -2063,7 +2080,10 @@ FHoudiniLandscapeTranslator::GetNonWeightBlendedLayerNames(const FHoudiniGeoPart
 	else if (FHoudiniEngineUtils::HapiCheckAttributeExists(InHGPO.GeoId, InHGPO.PartId, HAPI_UNREAL_ATTRIB_NONWEIGHTBLENDED_LAYERS, HAPI_ATTROWNER_DETAIL))
 		Owner = HAPI_ATTROWNER_DETAIL;
 	else
+	{
+		HOUDINI_LOG_WARNING(TEXT("[AMY]FHoudiniLandscapeTranslator::GetNonWeightBlendedLayerNames: No Proper Owner"));
 		return false;
+	}
 
 	// Get the values
 	HAPI_AttributeInfo AttribInfoNonWBLayer;
@@ -2071,9 +2091,11 @@ FHoudiniLandscapeTranslator::GetNonWeightBlendedLayerNames(const FHoudiniGeoPart
 	TArray<FString> AttribValues;
 	FHoudiniEngineUtils::HapiGetAttributeDataAsString(
 		InHGPO.GeoId, InHGPO.PartId, HAPI_UNREAL_ATTRIB_NONWEIGHTBLENDED_LAYERS, AttribInfoNonWBLayer, AttribValues, 1, Owner);
-
+	
+	HOUDINI_LOG_WARNING(TEXT("[AMY]FHoudiniLandscapeTranslator::GetNonWeightBlendedLayerNames: AttribValues %i"), AttribValues.Num());
 	if (AttribValues.Num() <= 0)
 		return false;
+	
 
 	// Convert them to FString
 	for (int32 Idx = 0; Idx < AttribValues.Num(); Idx++)
@@ -2132,7 +2154,7 @@ FHoudiniLandscapeTranslator::CreateOrUpdateLandscapeLayers(
 	// Get the names of all non weight blended layers
 	TArray<FString> NonWeightBlendedLayerNames;
 	FHoudiniLandscapeTranslator::GetNonWeightBlendedLayerNames(Heightfield, NonWeightBlendedLayerNames);
-
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY]CreateOrUpdateLandscapeLayers:GetNonWeightBlendedLayerNames: %i"), NonWeightBlendedLayerNames.Num());
 	// Used for exporting layer info objects (per landscape layer)
 	FHoudiniPackageParams LayerPackageParams = InLayerPackageParams;
 	// Used for exporting textures (per landscape tile)
@@ -2168,7 +2190,11 @@ FHoudiniLandscapeTranslator::CreateOrUpdateLandscapeLayers(
 
 		// No need to create flat layers as Unreal will remove them afterwards..
 		if (LayerMin == LayerMax)
+		{
+			HOUDINI_LOG_WARNING(TEXT("[AMY]CreateOrUpdateLandscapeLayers: Remove Flat Layer %s (%f)"), *LayerGeoPartObject->VolumeName, LayerMin);
+			
 			continue;
+		}
 
 		const FHoudiniVolumeInfo& LayerVolumeInfo = LayerGeoPartObject->VolumeInfo;
 
@@ -2547,8 +2573,9 @@ FHoudiniLandscapeTranslator::ConvertHeightfieldLayerToLandscapeLayer(
 
 			// Then convert it to [0 - 255]
 			DoubleValue *= LayerZSpacing;
-
+			//[AMY]
 			LayerData[nUnrealIndex++] = FMath::RoundToInt(DoubleValue);
+			// LayerData[nUnrealIndex++] = FMath::Floor(DoubleValue);
 		}
 	}
 
@@ -2920,9 +2947,9 @@ FHoudiniLandscapeTranslator::GetLandscapeMaterials(
 			OutLandscapeMaterial = Cast<UMaterialInterface>(StaticLoadObject(
 				UMaterialInterface::StaticClass(),
 				nullptr, *(Materials[0]), nullptr, LOAD_NoWarn, nullptr));
+				HOUDINI_LOG_MESSAGE(TEXT("[AMY]FHoudiniLandscapeTranslator::GetLandscapeMaterials: %i, %s"), Materials.Num(), *Materials[0]);
 		}
 	}
-
 	Materials.Empty();
 	FHoudiniApi::AttributeInfo_Init(&AttribMaterials);
 
@@ -3021,6 +3048,7 @@ FHoudiniLandscapeTranslator::GetLandscapeComponentExtentAttributes(
 ULandscapeLayerInfoObject *
 FHoudiniLandscapeTranslator::FindOrCreateLandscapeLayerInfoObject(const FString& InLayerName, const FString& InPackagePath, const FString& InPackageName, UPackage*& OutPackage)
 {
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY] FindOrCreateLandscapeLayerInfoObject: InLayerName: %s, InPackageName: %s "), *InLayerName, *InPackageName);
 	FString PackageFullName = InPackagePath + TEXT("/") + InPackageName;
 
 	// See if package exists, if it does, reuse it
@@ -3638,6 +3666,7 @@ FHoudiniLandscapeTranslator::GetLandscapePhysicalMaterial(const FHoudiniGeoPartO
 ULandscapeLayerInfoObject*
 FHoudiniLandscapeTranslator::GetLandscapeLayerInfoForLayer(const FHoudiniGeoPartObject& InLayerHGPO, const FName& InLayerName)
 {
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY]GetLandscapeLayerInfoForLayer: %s"), *InLayerName.ToString());
 	// See if we have assigned a landscape layer info object to this layer via attribute
 	HAPI_AttributeInfo AttributeInfo;
 	FHoudiniApi::AttributeInfo_Init(&AttributeInfo);

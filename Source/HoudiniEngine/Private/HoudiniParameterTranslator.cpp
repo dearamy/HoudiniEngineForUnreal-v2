@@ -129,6 +129,7 @@ FHoudiniParameterTranslator::UpdateLoadedParameters(UHoudiniAssetComponent* HAC)
 {
 	if (!HAC || HAC->IsPendingKill())
 		return false;
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY]ManagerPreCook:FHoudiniParameterTranslator::UpdateLoadedParameters|HAC: %s"),*HAC->GetOwner()->GetName());
 
 	// Update all the parameters using the loaded parameter object
 	// We set "UpdateValues" to false because we do not want to "read" the parameter value from Houdini
@@ -2080,6 +2081,7 @@ FHoudiniParameterTranslator::UploadChangedParameters( UHoudiniAssetComponent * H
 {
 	if (!HAC || HAC->IsPendingKill())
 		return false;
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY]ManagerPreCook: FHoudiniInputTranslator::UploadChangedParameters| %s"), *HAC->GetOwner()->GetName());
 
 	TMap<FString, UHoudiniParameter*> RampsToRevert;
 

@@ -336,6 +336,7 @@ FHoudiniEngine::AddTask(const FHoudiniEngineTask & InTask)
 	if ( HoudiniEngineScheduler )
 		HoudiniEngineScheduler->AddTask(InTask);
 
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY]FHoudiniEngine::AddTask|InTask: %s|TaskType: %i"), *InTask.ActorName, InTask.TaskType);
 	FScopeLock ScopeLock(&CriticalSection);
 	FHoudiniEngineTaskInfo TaskInfo;
 	TaskInfo.TaskType = InTask.TaskType;

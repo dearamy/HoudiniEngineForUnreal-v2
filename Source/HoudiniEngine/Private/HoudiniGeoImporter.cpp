@@ -422,6 +422,7 @@ UHoudiniGeoImporter::CreateLandscapes(TArray<UHoudiniOutput*>& InOutputs, UObjec
 bool
 UHoudiniGeoImporter::CreateInstancers(TArray<UHoudiniOutput*>& InOutputs, UObject* InParent, FHoudiniPackageParams InPackageParams)
 {
+	HOUDINI_LOG_MESSAGE(TEXT("[AMY]UHoudiniGeoImporter::CreateInstancers"));
 	bool HasInstancer = false;
 	for (auto& CurOutput : InOutputs)
 	{
